@@ -9,5 +9,7 @@ run:
     steps:
         - pwd
         - cd ./network/
+        - pwd
         - ls -la
+        - chmod +x network-smoketest.sh
         - ./network-smoketest.sh
