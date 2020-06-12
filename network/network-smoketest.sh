@@ -38,6 +38,9 @@ report_result() {
   fi
 }
 
+# wait 10 seconds for link up & DHCP
+sleep 10
+
 # call ifconfig
 ifconfig
 report_result ifconfig $?
