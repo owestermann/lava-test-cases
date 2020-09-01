@@ -1,0 +1,12 @@
+metadata:
+    format: Lava-Test Test Definition 1.0
+    name: diags-test-commands
+    description: "Test Diags Commands"
+    maintainer:
+        - oliver.westermann@cognex.com
+
+run:
+    steps:
+        - cd ./diags/
+        - chmod +x diags-test-commands.py
+        - ./diags-test-commands.py
