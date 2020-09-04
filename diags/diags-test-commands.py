@@ -125,7 +125,8 @@ def check_if_lava():
         IS_LAVA_TEST = True
 
 
-def report_lava(command_dict, passed=True):
+def set_test_name(command_dict):
+    """ set command_dict['test_case_name'] to a unique test case name """
     global TEST_NAME_LIST
 
     if 'args' in command_dict:
@@ -138,10 +139,30 @@ def report_lava(command_dict, passed=True):
         lava_test_name = lava_test_name + '_again'
 
     TEST_NAME_LIST.append(lava_test_name)
+    command_dict['test_case_name'] = lava_test_name
 
+
+def report_lava_start(command_dict):
+    if IS_LAVA_TEST:
+        print("<LAVA_SIGNAL_STARTTC {}>".format(command_dict['test_case_name']))
+
+
+def report_lava_stop(command_dict):
+    if IS_LAVA_TEST:
+        print("<LAVA_SIGNAL_ENDTC {}>".format(command_dict['test_case_name']))
+
+
+def report_lava_result(command_dict, passed = True, measurement = None):
     if IS_LAVA_TEST:
         result = 'pass' if passed else 'fail'
-        subprocess.call(['lava-test-case', lava_test_name, '--result', result])
+        if measurement is not None:
+            measurement_str = "MEASUREMENT={}".format(measurement)
+        else:
+            measurement_str = ""
+        print("<LAVA_SIGNAL_TESTCASE TEST_CASE_ID={} RESULT={} {}>".format(command_dict['test_case_name'],
+                result,
+                measurement_str))
+
 
 def discover_commands(connection):
     regular_commands = []
@@ -191,9 +212,9 @@ if __name__ == "__main__":
 
     check_if_lava()
     if IS_LAVA_TEST:
-        print("LAVA Test, using lava-test-case")
+        print("LAVA Test, using lava signal")
     else:
-        print("Console Test, no use of lava-test-case")
+        print("Console Test, no use of lava-signals")
 
     util.dmcc_host.logger.setLevel(logging.DEBUG)
     logger.debug("DMCC connection to %s:%d", HOST, PORT)
@@ -202,13 +223,18 @@ if __name__ == "__main__":
     regular_commands, get_commands = discover_commands(con)
 
     for command_under_test in commands_to_test:
+        set_test_name(command_under_test)
+        report_lava_start(command_under_test)
         logger.debug(command_under_test)
         # do the test
+        passed = True
         try:
             test_command(con, command_under_test)
-            report_lava(command_under_test)
         except RuntimeError:
-            report_lava(command_under_test, passed=False)
+            passed = False
+
+        report_lava_stop(command_under_test)
+        report_lava_result(command_under_test, passed)
 
         # remove from test list
         try:
