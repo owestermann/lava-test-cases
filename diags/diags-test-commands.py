@@ -23,6 +23,7 @@ DEBUG_LEVEL = logging.DEBUG
 #   - args (defaults to None)
 #   - a regex to apply to the return value (defaults to None)
 #   - a timeout (defaults to None)
+#   - debug (if present and true, print output)
 commands_to_test = [
     {'command': 'AIMER', 'args': '1 1'},
     {'command': 'AIMER', 'args': '2 1'},
@@ -60,11 +61,23 @@ commands_to_test = [
     {'command': 'GET BUZZER.FREQ', 'regex': b'3000'},
     {'command': 'SET BUZZER.FREQ', 'args': '0'},
     {'command': 'GET BUZZER.FREQ', 'regex': b'0'},
-    
-    
+    {'command': 'GET BUZZER.DUTY_CYCLE', 'regex': b'0.5'},
+    {'command': 'SET BUZZER.DUTY_CYCLE', 'args': '0.5'},
+    {'command': 'GET DIO.LINES', 'regex': b'Inputs:'},
+    {'command': 'GET DIO.SETUP', 'args': 'IN/OUT2', 'regex': 'in'},
+    {'command': 'GET DIO.VALUE', 'regex': b'0'},
+    {'command': 'SET DIO.SETUP', 'args': 'IN/OUT2 out'},
+    {'command': 'SET DIO.VALUE', 'args': 'IN/OUT2 1'},
+    {'command': 'GET DMCC.HEADER', 'regex': b'||;1>'},
+    {'command': 'GET FUSES.CLOSED', 'regex': b'False'},
+    {'command': 'GET FUSES.SRKH_WRITTEN', 'regex': b'False'},
+    {'command': 'GET EEPROM.IDENTITY', 'regex': b'25 0'},
+    {'command': 'GET EEPROM.REVISION', 'regex': b'1'},
+
     # move this up to the alphabetical place
     {'command': 'DEVICE.AUTOEXPOSURE', 'timeout':30},
 ]
+
 
 # commands we can't properly test here
 command_whitelist = [
@@ -117,6 +130,7 @@ command_whitelist = [
     'GET CRADLE_DETECT',
     'GET CURRENT-LIMIT',
 ]
+
 
 def check_if_lava():
     lava_util = shutil.which('lava-test-case')
@@ -193,6 +207,11 @@ def test_command(connection, command_dict):
         con.timeout = command_dict['timeout']
 
     result, retval = con.send_command_and_check("||;1>{}".format(command_str).encode())
+
+    if 'debug' in command_dict and command_dict['debug']:
+        logger.debug('result: {}'.format(result))
+        logger.debug('retval: {}'.format(retval))
+
     if result != b'0':
         raise RuntimeError("Command {}: returned {}, expected 0".format(command_dict['command'], result))
 
